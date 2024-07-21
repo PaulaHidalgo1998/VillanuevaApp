@@ -40,10 +40,17 @@ class Database:
 
     def get_personas(self):
         with self.connection:
-            return self.connection.execute("SELECT * FROM personas").fetchall()
+            return self.connection.execute("SELECT * FROM personas")
         
     def count_personas(self):
         query = "SELECT COUNT(*) FROM personas"
         cursor = self.connection.execute(query)
         count = cursor.fetchone()[0]
         return count
+    
+    def get_personas_by_tipo(self, tipo_aportacion):
+        with self.connection:
+            return self.connection.execute('''
+                SELECT * FROM personas WHERE tipo_aportacion = ?
+            ''', (tipo_aportacion,)).fetchall()
+             
