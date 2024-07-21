@@ -2,14 +2,17 @@ import tkinter as tk
 from tkinter import messagebox, ttk, Toplevel
 from database import Database
 import export as ex
+import datetime
+
 
 class Application(ttk.Frame):
     def __init__(self):
+        self.current_year = datetime.datetime.now().year
         self.root = tk.Tk()
         self.root.title("Gestión de Personas Fiestas Villanueva Del Conde")
-        self.root.iconbitmap("icono2_madera.ico")
-        self.database = Database("personas.db")
-        self.root.geometry("1025x420")
+        self.root.iconbitmap("icono1_blanco.ico")
+        self.database = Database("villanueva_" + str(self.current_year) + ".db")
+        self.root.geometry("1025x470")
 
         # Estilo
         style = ttk.Style(self.root)
@@ -38,53 +41,61 @@ class Application(ttk.Frame):
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
+        # Año
+        self.label_year = ttk.Label(main_frame, text="Fiestas Villanueva " + str(self.current_year))
+        self.label_year.grid(row=0, column=1, sticky=tk.W, pady=2)
+
         # Nombre
         self.label_nombre = ttk.Label(main_frame, text="Nombre:")
-        self.label_nombre.grid(row=0, column=0, sticky=tk.W, pady=2)
+        self.label_nombre.grid(row=1, column=0, sticky=tk.W, pady=2)
         self.entry_nombre = ttk.Entry(main_frame)
-        self.entry_nombre.grid(row=0, column=1, pady=2)
+        self.entry_nombre.grid(row=1, column=1, pady=2)
 
         # Apellidos
         self.label_apellidos = ttk.Label(main_frame, text="Apellidos:")
-        self.label_apellidos.grid(row=1, column=0, sticky=tk.W, pady=2)
+        self.label_apellidos.grid(row=2, column=0, sticky=tk.W, pady=2)
         self.entry_apellidos = ttk.Entry(main_frame)
-        self.entry_apellidos.grid(row=1, column=1, pady=2)
+        self.entry_apellidos.grid(row=2, column=1, pady=2)
 
         # Dinero
         self.label_dinero = ttk.Label(main_frame, text="Dinero:")
-        self.label_dinero.grid(row=2, column=0, sticky=tk.W, pady=2)
+        self.label_dinero.grid(row=3, column=0, sticky=tk.W, pady=2)
         self.entry_dinero = ttk.Entry(main_frame)
-        self.entry_dinero.grid(row=2, column=1, pady=2)
+        self.entry_dinero.grid(row=3, column=1, pady=2)
 
         # Tipo de Aportación
         self.label_tipo_aportacion = ttk.Label(main_frame, text="Tipo de Aportación")
-        self.label_tipo_aportacion.grid(row=3, column=0, sticky=tk.W, pady=2)
+        self.label_tipo_aportacion.grid(row=4, column=0, sticky=tk.W, pady=2)
         self.combo_tipo_aportacion  = ttk.Combobox(
             main_frame,
             state="readonly",
             values=["Adulto", "Mayor 67", "Joven", "Menores 12", "Aportaciones negocios", "Cantidades no cuota"]
         )
-        self.combo_tipo_aportacion.grid(row=3, column=1, pady=2)
+        self.combo_tipo_aportacion.grid(row=4, column=1, pady=2)
 
+        # Botón para cambiar Año
+        self.year_button = ttk.Button(main_frame, text="Cambiar Año", command=self.year_change)
+        self.year_button.grid(row=0, column=2, pady=2, sticky=tk.E)
+        
         # Botón para añadir persona
         self.add_button = ttk.Button(main_frame, text="Añadir Persona", command=self.add_persona)
-        self.add_button.grid(row=0, column=2, pady=2, sticky=tk.E)
+        self.add_button.grid(row=1, column=2, pady=2, sticky=tk.E)
 
         # Botón para eliminar persona
         self.delete_button = ttk.Button(main_frame, text="Eliminar Persona", command=self.delete_persona)
-        self.delete_button.grid(row=1, column=2, pady=2, sticky=tk.E)
+        self.delete_button.grid(row=2, column=2, pady=2, sticky=tk.E)
         
         # Botón para Borrar TODO
         self.delete_all_button = ttk.Button(main_frame, text="Borrar Todo", command=self.delete_ALL)
-        self.delete_all_button.grid(row=2, column=2, pady=2, sticky=tk.E)
+        self.delete_all_button.grid(row=3, column=2, pady=2, sticky=tk.E)
        
         # Botón para Exportar a PDF
         self.export_pdf_button = ttk.Button(main_frame, text="Exportar PDF", command=self.exportar_pdf)
-        self.export_pdf_button.grid(row=3, column=2, pady=2, sticky=tk.E)
+        self.export_pdf_button.grid(row=4, column=2, pady=2, sticky=tk.E)
 
         # Etiqueta para mostrar el número total de personas
         self.label_total_personas = ttk.Label(main_frame, text=f"Total de personas: {self.database.count_personas()}")
-        self.label_total_personas.grid(row=6, columnspan=3, pady=5)
+        self.label_total_personas.grid(row=7, columnspan=3, pady=5)
 
         # Tabla para ver personas
         self.tree = ttk.Treeview(main_frame, columns=("ID", "Nombre", "Apellidos", "Dinero", "Tipo_aportacion"), show='headings')
@@ -93,8 +104,42 @@ class Application(ttk.Frame):
         self.tree.heading('Apellidos', text='Apellidos')
         self.tree.heading('Dinero', text='Dinero')
         self.tree.heading('Tipo_aportacion', text='Tipo de Aportación')
-        self.tree.grid(row=7, columnspan=3, pady=2)
+        self.tree.grid(row=8, columnspan=3, pady=2)
 
+        self.load_personas()
+
+    def year_change(self):
+        def save_year():
+            new_year = entry_year.get()
+            try:
+                self.current_year = int(new_year)
+                messagebox.showinfo("Éxito", "El año seleccionado es: " + str(self.current_year))
+                top.destroy()
+                self.recargar_datos_nueva_base_datos()
+            except:
+                messagebox.showerror("Error", "El campo año debe ser un número.")
+
+        top = Toplevel(self.root)
+        top.title("Cambiar Año")
+        top.iconbitmap("icono1_blanco.ico")
+        top.geometry("300x150")
+
+        label = ttk.Label(top, text="¿Qué año es?")
+        label.pack(pady=10)
+
+        entry_year = ttk.Entry(top)
+        entry_year.pack(pady=10)
+
+        button_save = ttk.Button(top, text="Guardar", command=save_year)
+        button_save.pack(pady=10)
+
+        top.transient(self.root)
+        top.grab_set()
+        self.root.wait_window(top)
+
+    def recargar_datos_nueva_base_datos(self):
+        self.label_year.config(text=f"Fiestas Villanueva: {self.current_year}")
+        self.database = Database("villanueva_" + str(self.current_year) + ".db")
         self.load_personas()
 
     def add_persona(self):
@@ -135,8 +180,11 @@ class Application(ttk.Frame):
             self.load_personas()
 
     def exportar_pdf(self):
-        ex.export_to_pdf(self.database)
-        messagebox.showinfo("Éxito", "PDF creado correctamente")
+        try:
+            ex.export_to_pdf(self.database, self.current_year)
+            messagebox.showinfo("Éxito", "PDF creado correctamente")
+        except Exception as e:
+                messagebox.showerror("Error", "El PDF no se ha podido crear por el siguiente error: " + str(e))
 
     def clear_entries(self):
         self.entry_nombre.delete(0, tk.END)
