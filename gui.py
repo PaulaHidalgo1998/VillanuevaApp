@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import messagebox, ttk, Toplevel
+import tkinter.font as tkfont
 from database import Database
 import export as ex
 import datetime
+
 
 
 class Application(ttk.Frame):
@@ -12,7 +14,7 @@ class Application(ttk.Frame):
         self.root.title("Gestión de Personas Fiestas Villanueva Del Conde")
         self.root.iconbitmap("icono1_blanco.ico")
         self.database = Database("villanueva_" + str(self.current_year) + ".db")
-        self.root.geometry("1025x470")
+        self.root.geometry("500x470")
 
         # Estilo
         style = ttk.Style(self.root)
@@ -41,9 +43,17 @@ class Application(ttk.Frame):
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=tk.NSEW)
 
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+
+        main_frame.grid_columnconfigure(1, weight=1)
+        main_frame.grid_rowconfigure(8, weight=1)
+
+        big_font = tkfont.Font(size=18, weight="bold")
+
         # Año
-        self.label_year = ttk.Label(main_frame, text="Fiestas Villanueva " + str(self.current_year))
-        self.label_year.grid(row=0, column=1, sticky=tk.W, pady=2)
+        self.label_year = ttk.Label(main_frame, text="Fiestas Villanueva " + str(self.current_year), font=big_font)
+        self.label_year.grid(row=0, column=1, columnspan=3, sticky=tk.EW, pady=2)
 
         # Nombre
         self.label_nombre = ttk.Label(main_frame, text="Nombre:")
@@ -73,9 +83,7 @@ class Application(ttk.Frame):
         )
         self.combo_tipo_aportacion.grid(row=4, column=1, pady=2)
 
-        # Botón para cambiar Año
-        self.year_button = ttk.Button(main_frame, text="Cambiar Año", command=self.year_change)
-        self.year_button.grid(row=0, column=2, pady=2, sticky=tk.E)
+        
         
         # Botón para añadir persona
         self.add_button = ttk.Button(main_frame, text="Añadir Persona", command=self.add_persona)
@@ -86,8 +94,12 @@ class Application(ttk.Frame):
         self.delete_button.grid(row=2, column=2, pady=2, sticky=tk.E)
         
         # Botón para Borrar TODO
-        self.delete_all_button = ttk.Button(main_frame, text="Borrar Todo", command=self.delete_ALL)
-        self.delete_all_button.grid(row=3, column=2, pady=2, sticky=tk.E)
+        # self.delete_all_button = ttk.Button(main_frame, text="Borrar Todo", command=self.delete_ALL)
+        # self.delete_all_button.grid(row=3, column=2, pady=2, sticky=tk.E)
+
+        # Botón para cambiar Año
+        self.year_button = ttk.Button(main_frame, text="Cambiar Año", command=self.year_change)
+        self.year_button.grid(row=3, column=2, pady=2, sticky=tk.E)
        
         # Botón para Exportar a PDF
         self.export_pdf_button = ttk.Button(main_frame, text="Exportar PDF", command=self.exportar_pdf)
@@ -98,13 +110,21 @@ class Application(ttk.Frame):
         self.label_total_personas.grid(row=7, columnspan=3, pady=5)
 
         # Tabla para ver personas
-        self.tree = ttk.Treeview(main_frame, columns=("ID", "Nombre", "Apellidos", "Dinero", "Tipo_aportacion"), show='headings')
-        self.tree.heading('ID', text='ID')
+        self.tree = ttk.Treeview(main_frame, columns=("Nombre", "Apellidos", "Dinero", "Tipo_aportacion"), show='headings')
+        # self.tree.heading('ID', text='ID')
         self.tree.heading('Nombre', text='Nombre')
         self.tree.heading('Apellidos', text='Apellidos')
         self.tree.heading('Dinero', text='Dinero')
         self.tree.heading('Tipo_aportacion', text='Tipo de Aportación')
-        self.tree.grid(row=8, columnspan=3, pady=2)
+        self.tree.grid(row=8, column=0, columnspan=3, pady=2, sticky="nsew")
+
+        # Scroll vertical
+        scrollbar_y = ttk.Scrollbar(main_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=scrollbar_y.set)
+
+        # Posicionar Treeview y Scrollbar
+        self.tree.grid(row=8, column=0, columnspan=3, pady=2, sticky="nsew")
+        scrollbar_y.grid(row=8, column=3, sticky="ns")
 
         self.load_personas()
 
@@ -197,7 +217,7 @@ class Application(ttk.Frame):
             self.tree.delete(row)
         personas = self.database.get_personas()
         for persona in personas:
-            self.tree.insert("", "end", values=persona)
+            self.tree.insert("", "end", values=persona[1:])
         self.update_total_personas()
 
     def update_total_personas(self):
@@ -217,10 +237,10 @@ class Application(ttk.Frame):
             self.sort_table(self.sort_column, self.sort_ascending)
 
     def sort_table(self, col, ascending):
-        if col == 0 or col == 3:
+        if col == 2:
             data = [(float(self.tree.set(child, col)), child) for child in self.tree.get_children("")]
         else:
-            data = [(self.tree.set(child, col), child) for child in self.tree.get_children("")]
+            data = [(ex.strip_accents(self.tree.set(child, col)).lower(), child) for child in self.tree.get_children("")]
         data.sort(reverse=not ascending)
         for index, item in enumerate(data):
             self.tree.move(item[1], "", index)
