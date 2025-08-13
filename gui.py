@@ -110,8 +110,8 @@ class Application(ttk.Frame):
         self.label_total_personas.grid(row=7, columnspan=3, pady=5)
 
         # Tabla para ver personas
-        self.tree = ttk.Treeview(main_frame, columns=("Nombre", "Apellidos", "Dinero", "Tipo_aportacion"), show='headings')
-        # self.tree.heading('ID', text='ID')
+        self.tree = ttk.Treeview(main_frame, columns=("ID", "Nombre", "Apellidos", "Dinero", "Tipo_aportacion"), show='headings')
+        self.tree.heading('ID', text='ID')
         self.tree.heading('Nombre', text='Nombre')
         self.tree.heading('Apellidos', text='Apellidos')
         self.tree.heading('Dinero', text='Dinero')
@@ -217,7 +217,7 @@ class Application(ttk.Frame):
             self.tree.delete(row)
         personas = self.database.get_personas()
         for persona in personas:
-            self.tree.insert("", "end", values=persona[1:])
+            self.tree.insert("", "end", values=persona)
         self.update_total_personas()
 
     def update_total_personas(self):
@@ -237,7 +237,7 @@ class Application(ttk.Frame):
             self.sort_table(self.sort_column, self.sort_ascending)
 
     def sort_table(self, col, ascending):
-        if col == 2:
+        if col == 0 or col == 3:
             data = [(float(self.tree.set(child, col)), child) for child in self.tree.get_children("")]
         else:
             data = [(ex.strip_accents(self.tree.set(child, col)).lower(), child) for child in self.tree.get_children("")]

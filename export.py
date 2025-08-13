@@ -33,7 +33,7 @@ def export_to_pdf(base_datos, year):
     for count, persona in enumerate(sorted(base_datos.get_personas_by_tipo("Adulto"), key=lambda p: strip_accents(p[2]).casefold()), start=1):
         y = valor_y(y, valor_espaciado_little, valor_espaciado_big, height, c)
         c.drawString(equivalencia_centimetro, y, str(count))
-        c.drawString(equivalencia_centimetro*1.2, y, str(persona[2]) + ", " + persona[1])
+        c.drawString(equivalencia_centimetro*1.5, y, str(persona[2]) + ", " + persona[1])
         c.drawString(equivalencia_centimetro*5, y, str(persona[3]))
         
 
